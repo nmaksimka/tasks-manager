@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${isEdit} ? 'Редактирование задачи' : 'Новая задача'">Task Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    <style>
+        .priority-option {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .priority-option:hover {
+            transform: scale(1.05);
+        }
+        .priority-option.selected {
+            border: 2px solid #0d6efd;
+            background-color: #f0f8ff;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">✅ Task Manager</a>
+        <div class="navbar-nav">
+            <a class="nav-link" href="/">← Назад к списку</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <span th:if="${isEdit}">✏️ Редактирование задачи</span>
+                        <span th:unless="${isEdit}">➕ Новая задача</span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/tasks/save}" method="post" th:object="${task}">
+                        <input type="hidden" th:field="*{id}" />
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label fw-bold">Название задачи *</label>
+                            <input type="text" class="form-control form-control-lg"
+                                   id="title" th:field="*{title}"
+                                   placeholder="Введите название задачи" required>
+                            <div class="form-text">Обязательное поле, от 3 до 100 символов</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-bold">Описание</label>
+                            <textarea class="form-control" id="description"
+                                      th:field="*{description}" rows="4"
+                                      placeholder="Опишите детали задачи (необязательно)"></textarea>
+                            <div class="form-text">Максимум 500 символов</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold d-block mb-3">Приоритет</label>
+                            <div class="row g-3">
+                                <div class="col-4">
+                                    <div class="card priority-option text-center p-3"
+                                         onclick="selectPriority(1)"
+                                         th:classappend="${task.priority == 1} ? 'selected' : ''">
+                                        <div class="text-danger fs-5">🔴</div>
+                                        <div class="fw-bold text-danger">Высокий</div>
+                                        <small class="text-muted">Срочно важно</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card priority-option text-center p-3"
+                                         onclick="selectPriority(2)"
+                                         th:classappend="${task.priority == 2 or task.priority == null} ? 'selected' : ''">
+                                        <div class="text-warning fs-5">🟡</div>
+                                        <div class="fw-bold text-warning">Средний</div>
+                                        <small class="text-muted">Обычная важность</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card priority-option text-center p-3"
+                                         onclick="selectPriority(3)"
+                                         th:classappend="${task.priority == 3} ? 'selected' : ''">
+                                        <div class="text-success fs-5">🟢</div>
+                                        <div class="fw-bold text-success">Низкий</div>
+                                        <small class="text-muted">Не срочно</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="priority" th:field="*{priority}" value="2">
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/" class="btn btn-outline-secondary me-md-2 px-4">
+                                Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <span th:if="${isEdit}">Сохранить изменения</span>
+                                <span th:unless="${isEdit}">Создать задачу</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center text-muted">
+                <small>
+                    <span th:if="${isEdit}">Изменения сохранятся моментально</span>
+                    <span th:unless="${isEdit}">Задача появится в общем списке</span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function selectPriority(priority) {
+        document.getElementById('priority').value = priority;
+
+        document.querySelectorAll('.priority-option').forEach(el => {
+            el.classList.remove('selected');
+        });
+
+        event.currentTarget.classList.add('selected');
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
