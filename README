@@ -10,7 +10,7 @@ CREATE DATABASE taskdb;
 ================================================================
 2. Запуск приложения
 # Клонируйте проект (если нужно)
-git clone <>
+git clone <ваш-репозиторий>
 # Перейдите в директорию проекта
 cd task-manager
 # Запустите приложение
@@ -22,62 +22,104 @@ mvn spring-boot:run
 ✅ Проверка: http://localhost:8081/api/tasks/health
 ================================================================
 🛠 Технологии
-Компонент: Технология
-Backend: Java 17, Spring Boot 3.1.5
-База данных: PostgreSQL
-Frontend: Thymeleaf, Bootstrap 5
-Инструменты: Maven, Lombok
-Сервер:	Embedded Tomcat
+Компонент         | Технология
+------------------|--------------
+Backend           | Java 17, Spring Boot 3.1.5
+Безопасность      | Spring Security 6
+Аутентификация    | BCrypt, Remember-Me
+База данных       | PostgreSQL, Spring Data JPA
+Frontend          | Thymeleaf, Bootstrap 5
+Валидация         | Bean Validation
+Инструменты       | Maven, Lombok
+Сервер            | Embedded Tomcat
 ================================================================
 📁 Структура проекта
 task-manager/
 ├── src/main/java/com/tasks_manager/taskmanager/
-│   ├── TaskManagerApplication.java     # Главный класс
-│   ├── Task.java                       # Модель задачи
-│   ├── TaskRepository.java             # Репозиторий JPA
-│   ├── TaskService.java                # Бизнес-логика
-│   ├── TaskController.java             # REST API
-│   ├── WebController.java              # Веб-контроллер
-│   └── dto/                            # DTO объекты
-│       ├── TaskCreateRequest.java
-│       └── TaskUpdateRequest.java
+│   ├── config/
+│   │   ├── TaskManagerApplication.java     # Главный класс
+│   │   ├── SecurityConfig.java             # Конфигурация безопасности
+│   │   └── AdminInitializer.java           # Инициализация тестовых пользователей
+│   ├── controllers/
+│   │   ├── TaskController.java             # REST API
+│   │   ├── WebController.java              # Веб-контроллер
+│   │   └── AuthController.java             # Контроллер аутентификации
+│   ├── entities/
+│   │   ├── Task.java                       # Модель задачи
+│   │   └── User.java                       # Модель пользователя
+│   ├── repositories/
+│   │   ├── TaskRepository.java             # Репозиторий задач
+│   │   └── UserRepository.java             # Репозиторий пользователей
+│   ├── services/
+│   │   ├── TaskService.java                # Сервис задач
+│   │   └── UserService.java                # Сервис пользователей
+│   └── dto/
+│       ├── TaskCreateRequest.java          # DTO создания задачи
+│       ├── TaskUpdateRequest.java          # DTO обновления задачи
+│       ├── LoginRequest.java               # DTO входа
+│       └── RegistrationRequest.java        # DTO регистрации
 ├── src/main/resources/
-│   ├── templates/                      # HTML шаблоны
-│   │   ├── index.html                  # Главная страница
-│   │   └── task-form.html              # Форма задачи
-│   ├── static/css/                     # Стили
+│   ├── templates/                          # HTML шаблоны
+│   │   ├── index.html                      # Главная страница
+│   │   ├── login.html                      # Страница входа
+│   │   ├── register.html                   # Страница регистрации
+│   │   ├── profile.html                    # Профиль пользователя
+│   │   └── task-form.html                  # Форма задачи
+│   ├── static/css/                         # Стили
 │   │   └── style.css
-│   └── application.yml                 # Конфигурация
-└── pom.xml                             # Maven зависимости
+│   └── application.yml                     # Конфигурация
+└── pom.xml                                 # Maven зависимости
+================================================================
+👤 Аутентификация
+Тестовые пользователи:
+┌──────────────┬────────────┬───────────┐
+│ Username     │ Password   │ Roles     │
+├──────────────┼────────────┼───────────┤
+│ admin        │ admin123   │ ADMIN,USER│
+│ test         │ test123    │ USER      │
+│ user         │ user123    │ USER      │
+└──────────────┴────────────┴───────────┘
+
+Доступные пути:
+- `/login` - Страница входа
+- `/register` - Страница регистрации
+- `/profile` - Профиль пользователя (только для аутентифицированных)
+- `/logout` - Выход из системы
 ================================================================
 📚 REST API
 
-Метод	Путь	              Описание
-GET	    /api/tasks	          Все задачи
-GET	    /api/tasks/{id}	      Задача по ID
-POST	/api/tasks	          Создать задачу
-PUT	    /api/tasks/{id}	      Обновить задачу
-DELETE	/api/tasks/{id}	      Удалить задачу
-GET	    /api/tasks/active	  Активные задачи
-GET	    /api/tasks/completed  Выполненные задачи
-GET	    /api/tasks/health	  Проверка работы
+Метод    | Путь                    | Описание
+---------|-------------------------|----------
+GET      | /api/tasks              | Все задачи пользователя
+GET      | /api/tasks/{id}         | Задача по ID
+POST     | /api/tasks              | Создать задачу
+PUT      | /api/tasks/{id}         | Обновить задачу
+PATCH    | /api/tasks/{id}/complete| Отметить как выполненную
+DELETE   | /api/tasks/{id}         | Удалить задачу
+GET      | /api/tasks/active       | Активные задачи
+GET      | /api/tasks/completed    | Выполненные задачи
+GET      | /api/tasks/overdue      | Просроченные задачи
+GET      | /api/tasks/today        | Задачи на сегодня
+GET      | /api/tasks/health       | Проверка работы
 
 Пример создания задачи:
+```bash
 curl -X POST http://localhost:8081/api/tasks \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "Изучить Spring Boot",
-    "description": "Пройти курс по Spring Boot",
+    "title": "Название",
+    "description": "Описание",
     "priority": 1
   }'
 ================================================================
 🌐 Веб-интерфейс
 Главные страницы:
-/ - Список всех задач с фильтрацией
 
-/tasks/new - Создание новой задачи
+/ - Список всех задач с фильтрацией (доступно всем)
 
-/tasks/edit/{id} - Редактирование задачи
+/tasks/new - Создание новой задачи (требуется вход)
+
+/tasks/edit/{id} - Редактирование задачи (требуется вход)
 
 /tasks/search - Поиск задач
 
@@ -85,10 +127,22 @@ curl -X POST http://localhost:8081/api/tasks \
 
 /tasks/sort - Сортировка задач
 
+/profile - Профиль пользователя (требуется вход)
+
 Функции интерфейса:
 ✅ Создание/редактирование/удаление задач
+🔐 Аутентификация и регистрация пользователей
 🔍 Поиск по названию и описанию
-📊 Фильтрация (активные/выполненные/приоритет)
+📊 Фильтрация (активные/выполненные/приоритет/дедлайн)
 📈 Сортировка (приоритет/дата/название)
-📱 Адаптивный дизайн =)
+📱 Адаптивный дизайн
+👤 Управление профилем пользователя
+================================================================
+🔒 Роли и доступ
+
+Роль	Доступные пути
+GUEST	/, /login, /register, /css/, /js/, /images/**
+USER	Все пути GUEST + /tasks/, /profile/, /api/**
+ADMIN	Все пути USER + /admin/** (будущие функции)
+Все задачи привязаны к пользователю - каждый видит только свои задачи.
 ================================================================
