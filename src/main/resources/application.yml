@@ -27,7 +27,13 @@ spring:
     mode: HTML
     encoding: UTF-8
 
+  security:
+    user:
+      name: user
+      password: password
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type: TRACE
+    org.springframework.security: DEBUG
