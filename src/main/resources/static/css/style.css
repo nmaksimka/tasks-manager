@@ -5,3 +5,65 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+.task-actions .btn {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.task-actions .btn:hover {
+    opacity: 1;
+}
+
+.task-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.sort-dropdown .dropdown-item.active {
+    background-color: #0d6efd;
+}
+
+.overdue {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.today {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.soon {
+    color: #17a2b8;
+}
+
+.future {
+    color: #6c757d;
+}
+
+.completed {
+    color: #28a745;
+}
+
+.no-deadline {
+    color: #6c757d;
+}
+
+.priority-option {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.priority-option:hover {
+    transform: scale(1.05);
+}
+
+.priority-option.selected {
+    border: 2px solid #0d6efd;
+    background-color: #f0f8ff;
+}

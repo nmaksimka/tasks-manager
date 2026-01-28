@@ -1,5 +1,7 @@
-package com.tasks_manager.taskmanager;
+package com.tasks_manager.taskmanager.controllers;
 
+import com.tasks_manager.taskmanager.entities.Task;
+import com.tasks_manager.taskmanager.services.TaskService;
 import com.tasks_manager.taskmanager.dto.TaskCreateRequest;
 import com.tasks_manager.taskmanager.dto.TaskUpdateRequest;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +30,8 @@ public class TaskController {
         return taskService.createTask(
                 request.getTitle(),
                 request.getDescription(),
-                request.getPriority()
+                request.getPriority(),
+                request.getDeadline()
         );
     }
 
@@ -38,7 +41,8 @@ public class TaskController {
                 id,
                 request.getTitle(),
                 request.getDescription(),
-                request.getPriority()
+                request.getPriority(),
+                request.getDeadline()
         );
     }
 
@@ -60,6 +64,16 @@ public class TaskController {
     @GetMapping("/active")
     public List<Task> getActiveTasks() {
         return taskService.getActiveTasks();
+    }
+
+    @GetMapping("/overdue")
+    public List<Task> getOverdueTasks() {
+        return taskService.getOverdueTasks();
+    }
+
+    @GetMapping("/today")
+    public List<Task> getTodayTasks() {
+        return taskService.getTodayTasks();
     }
 
     @GetMapping("/health")
