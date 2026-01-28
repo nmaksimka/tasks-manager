@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Профиль - Task Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/">
+      <span class="fs-4">✅</span> Task Manager
+    </a>
+    <div class="navbar-nav ms-auto">
+      <a class="nav-link" href="/">← Назад к задачам</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8 mx-auto">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">👤 Профиль пользователя</h4>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-4 text-center">
+              <div class="display-1 mb-3">👤</div>
+              <h5 th:text="${user.username}"></h5>
+              <small class="text-muted">Пользователь</small>
+            </div>
+            <div class="col-md-8">
+              <h5>Информация</h5>
+              <table class="table table-borderless">
+                <tr>
+                  <th width="150">Имя пользователя:</th>
+                  <td th:text="${user.username}"></td>
+                </tr>
+                <tr>
+                  <th>Email:</th>
+                  <td th:text="${user.email}"></td>
+                </tr>
+                <tr th:if="${user.firstName}">
+                  <th>Имя:</th>
+                  <td th:text="${user.firstName}"></td>
+                </tr>
+                <tr th:if="${user.lastName}">
+                  <th>Фамилия:</th>
+                  <td th:text="${user.lastName}"></td>
+                </tr>
+                <tr>
+                  <th>Дата регистрации:</th>
+                  <td th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy HH:mm')}"></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="row text-center mt-4">
+            <div class="col-md-4">
+              <div class="card border-0 bg-light">
+                <div class="card-body py-3">
+                  <h3 class="text-primary mb-0" th:text="${taskCount}">0</h3>
+                  <small class="text-muted">Всего задач</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light">
+                <div class="card-body py-3">
+                  <h3 class="text-success mb-0" th:text="${activeTaskCount}">0</h3>
+                  <small class="text-muted">Активных</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light">
+                <div class="card-body py-3">
+                  <h3 class="text-secondary mb-0" th:text="${completedTaskCount}">0</h3>
+                  <small class="text-muted">Выполненных</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <h5>Статистика</h5>
+            <div class="progress mb-3">
+              <div class="progress-bar bg-success"
+                   th:style="'width: ' + ${taskCount > 0 ? (completedTaskCount * 100 / taskCount) : 0} + '%'"
+                   th:text="${taskCount > 0 ? (completedTaskCount * 100 / taskCount) : 0} + '%'">
+              </div>
+            </div>
+            <small class="text-muted">Процент выполненных задач</small>
+          </div>
+        </div>
+        <div class="card-footer text-center">
+          <form th:action="@{/logout}" method="post" class="d-inline">
+            <button type="submit" class="btn btn-outline-danger">Выйти из системы</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
