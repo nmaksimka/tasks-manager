@@ -13,6 +13,29 @@
         <div class="navbar-nav">
             <a class="nav-link" href="/">← Назад к списку</a>
         </div>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="/">← Назад к списку</a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="themeDropdownTask" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    🌗 Тема
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="themeDropdownTask">
+                    <li>
+                        <div class="dropdown-item d-flex align-items-center justify-content-between">
+                            <span>Темная тема</span>
+                            <label class="theme-switch">
+                                <input type="checkbox" id="themeToggleTask">
+                                <span class="theme-slider"></span>
+                            </label>
+                        </div>
+                    </li>
+                    <li><a class="dropdown-item" href="#" onclick="setTheme('light'); return false;">☀️ Светлая</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setTheme('dark'); return false;">🌙 Темная</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setTheme('auto'); return false;">🔄 Авто</a></li>
+                </ul>
+            </li>
+        </div>
     </div>
 </nav>
 
@@ -122,5 +145,106 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function setTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+            const toggle = document.getElementById('themeToggleTask');
+            if (toggle) toggle.checked = true;
+        }
+        else if (theme === 'light') {
+            document.body.classList.remove('dark-theme');
+            localStorage.setItem('theme', 'light');
+            const toggle = document.getElementById('themeToggleTask');
+            if (toggle) toggle.checked = false;
+        }
+        else if (theme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            localStorage.setItem('theme', 'auto');
+            if (prefersDark) {
+                document.body.classList.add('dark-theme');
+                const toggle = document.getElementById('themeToggleTask');
+                if (toggle) toggle.checked = true;
+            } else {
+                document.body.classList.remove('dark-theme');
+                const toggle = document.getElementById('themeToggleTask');
+                if (toggle) toggle.checked = false;
+            }
+        }
+
+        const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('themeDropdownTask'));
+        if (dropdown) dropdown.hide();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('theme');
+
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+        else if (savedTheme === 'light') {
+            document.body.classList.remove('dark-theme');
+        }
+        else if (savedTheme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+        }
+        else {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                document.body.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        const toggle = document.getElementById('themeToggleTask');
+        if (toggle) {
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                toggle.checked = true;
+            } else {
+                toggle.checked = false;
+            }
+
+            toggle.addEventListener('change', function(e) {
+                e.stopPropagation();
+                if (this.checked) {
+                    setTheme('dark');
+                } else {
+                    setTheme('light');
+                }
+            });
+
+            const label = toggle.closest('.theme-switch');
+            if (label) {
+                label.style.cursor = 'pointer';
+                label.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        }
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme === 'auto') {
+                if (e.matches) {
+                    document.body.classList.add('dark-theme');
+                    const toggle = document.getElementById('themeToggleTask');
+                    if (toggle) toggle.checked = true;
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    const toggle = document.getElementById('themeToggleTask');
+                    if (toggle) toggle.checked = false;
+                }
+            }
+        });
+    });
+</script>
 </body>
 </html>
