@@ -1,0 +1,9 @@
+spring:
+  thymeleaf:
+    cache: false
+
+app:
+  remember-me:
+    key: ${REMEMBER_ME_KEY:dev-only-remember-me-key}
+  demo:
+    password: ${DEMO_PASSWORD:demo12345}
