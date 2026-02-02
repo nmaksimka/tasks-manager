@@ -1,35 +1,42 @@
 package com.tasks_manager.taskmanager.entities;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
-import com.tasks_manager.taskmanager.entities.User;
+import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name="tasks")
-@Data
-@NoArgsConstructor
+@Table(name = "tasks")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Task {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Название задачи обязательно")
-    @Size(min = 3, max = 100, message = "Название должно быть от 3 до 100 символов")
     @Column(nullable = false)
     private String title;
 
-    @Size(max = 777, message = "Описание не может превышать 777 символов")
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private boolean completed = false;
+    @Column(nullable = false)
+    private boolean completed;
 
-    private Integer priority = 2;
+    private Priority priority;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -37,40 +44,25 @@ public class Task {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    @Column(name = "deadline")
     private LocalDate deadline;
 
-    @Transient
-    private String deadlineStatus;
-
-    public Task(String title, String description, Integer priority) {
-        this.title = title;
-        this.description = description;
-        this.priority = priority;
-        this.completed = false;
-    }
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @Setter(AccessLevel.NONE)
     private User user;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
+    public Task(User user, LocalDateTime createdAt) {
+        this.user = user;
+        this.createdAt = createdAt;
     }
 
-    public String getDeadlineStatus() {
-        if(deadline == null) return "no-deadline";
-        if(completed) return "completed";
+    public void complete(LocalDateTime at) {
+        completed = true;
+        completedAt = at;
+    }
 
-        LocalDate today = LocalDate.now();
-
-        if(deadline.isBefore(today)) {
-            return "overdue";
-        } else if(deadline.equals(today)) {
-            return "today";
-        } else if(deadline.isBefore(today.plusDays(3))) {
-            return "soon";
-        } else return "future";
+    public void reopen() {
+        completed = false;
+        completedAt = null;
     }
 }

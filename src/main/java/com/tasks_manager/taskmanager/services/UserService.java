@@ -1,16 +1,21 @@
 package com.tasks_manager.taskmanager.services;
 
+import com.tasks_manager.taskmanager.dto.ProfileForm;
+import com.tasks_manager.taskmanager.dto.RegistrationRequest;
 import com.tasks_manager.taskmanager.entities.User;
+import com.tasks_manager.taskmanager.exceptions.UserAlreadyExistsException;
 import com.tasks_manager.taskmanager.repositories.UserRepository;
+import java.util.Locale;
+import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -19,49 +24,39 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User registerUser(String username, String email, String password) {
-        if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Пользователь с таким именем уже существует");
+    @Transactional
+    public User register(RegistrationRequest request) {
+        var username = request.getUsername().strip();
+        var email = request.getEmail().strip().toLowerCase(Locale.ROOT);
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
+            throw new UserAlreadyExistsException("username", "Логин уже занят");
         }
-
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Пользователь с таким email уже существу");
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new UserAlreadyExistsException("email", "Этот email уже зарегистрирован");
         }
-
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setRoles(Collections.singleton("ROLE_USER"));
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-
-        return userRepository.save(user);
+        var user = new User(username, email, passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(blankToNull(request.getFirstName()));
+        user.setLastName(blankToNull(request.getLastName()));
+        try {
+            return userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new UserAlreadyExistsException("username", "Логин или email уже заняты");
+        }
     }
 
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+    public User getUser(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new NoSuchElementException("User not found: " + id));
     }
 
-    public User findById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+    @Transactional
+    public User updateProfile(Long id, ProfileForm form) {
+        var user = getUser(id);
+        user.setFirstName(blankToNull(form.getFirstName()));
+        user.setLastName(blankToNull(form.getLastName()));
+        return user;
     }
 
-    public User updateUser(Long id, String firstName, String lastName) {
-        User user = findById(id);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setUpdatedAt(LocalDateTime.now());
-        return userRepository.save(user);
-    }
-
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
-    }
-
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 }
