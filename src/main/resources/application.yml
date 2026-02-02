@@ -14,3 +14,7 @@ spring:
       ddl-auto: validate
   flyway:
     baseline-on-migrate: true
+
+app:
+  remember-me:
+    key: ${REMEMBER_ME_KEY}
