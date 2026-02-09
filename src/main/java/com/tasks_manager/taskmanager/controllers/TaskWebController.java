@@ -4,9 +4,9 @@ import com.tasks_manager.taskmanager.dto.TaskFilter;
 import com.tasks_manager.taskmanager.dto.TaskForm;
 import com.tasks_manager.taskmanager.dto.TaskQuery;
 import com.tasks_manager.taskmanager.dto.TaskSort;
-import com.tasks_manager.taskmanager.entities.Priority;
 import com.tasks_manager.taskmanager.security.AppUserPrincipal;
 import com.tasks_manager.taskmanager.services.TaskService;
+import com.tasks_manager.taskmanager.web.TaskLinks;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -27,18 +27,11 @@ public class TaskWebController {
         this.taskService = taskService;
     }
 
-    @ModelAttribute
-    void references(Model model) {
-        model.addAttribute("priorities", Priority.values());
-        model.addAttribute("filters", TaskFilter.values());
-        model.addAttribute("sorts", TaskSort.values());
-    }
-
     @GetMapping("/")
     public String index(@AuthenticationPrincipal AppUserPrincipal user, @ModelAttribute("query") TaskQuery query,
                         Model model) {
         model.addAttribute("tasks", taskService.findTasks(user.id(), query));
-        model.addAttribute("stats", taskService.stats(user.id()));
+        TaskLinks.addTo(model, query);
         return "index";
     }
 

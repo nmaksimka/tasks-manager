@@ -51,6 +51,7 @@ public class TaskService {
                 total - completed,
                 completed,
                 taskRepository.countByUserIdAndCompletedFalseAndDeadline(userId, today),
+                taskRepository.countByUserIdAndCompletedFalseAndDeadlineBetween(userId, today, today.plusDays(7)),
                 taskRepository.countByUserIdAndCompletedFalseAndDeadlineBefore(userId, today)
         );
     }
