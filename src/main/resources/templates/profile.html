@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Профиль')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+
+    <main class="main narrow">
+        <header class="profile-head">
+            <span class="avatar avatar-lg" th:text="${#strings.toUpperCase(#strings.substring(me.displayName, 0, 1))}">D</span>
+            <div>
+                <h1 th:text="${me.displayName}">Демо Пользователь</h1>
+                <p class="sub">
+                    <span th:text="'@' + ${me.username}">@demo</span>
+                    <span class="sep">·</span>
+                    <span th:text="${me.email}">demo@example.com</span>
+                </p>
+            </div>
+        </header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <section class="stat-grid" aria-label="Статистика">
+            <div class="stat">
+                <span class="stat-value" th:text="${stats.total}">0</span>
+                <span class="stat-label">Всего задач</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" th:text="${stats.active}">0</span>
+                <span class="stat-label">В работе</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" th:text="${stats.completed}">0</span>
+                <span class="stat-label">Выполнено</span>
+            </div>
+            <div class="stat" th:classappend="${stats.overdue > 0} ? 'stat-alert'">
+                <span class="stat-value" th:text="${stats.overdue}">0</span>
+                <span class="stat-label">Просрочено</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Выполнение</h2>
+                <span class="sub" th:text="${stats.completionPercent()} + '%'">0%</span>
+            </div>
+            <progress class="progress-line lg" max="100" th:value="${stats.completionPercent()}" value="0"></progress>
+        </section>
+
+        <form class="panel form-stack" method="post" th:action="@{/profile}" th:object="${form}" novalidate>
+            <div class="panel-head">
+                <h2>Личные данные</h2>
+                <span class="sub" th:text="'С нами с ' + ${#temporals.format(me.createdAt, 'd MMMM yyyy')}">С нами с</span>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label class="form-label" for="firstName">Имя</label>
+                    <input class="form-control" id="firstName" th:field="*{firstName}" maxlength="50"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{firstName}">Ошибка</div>
+                </div>
+                <div class="field">
+                    <label class="form-label" for="lastName">Фамилия</label>
+                    <input class="form-control" id="lastName" th:field="*{lastName}" maxlength="50"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{lastName}">Ошибка</div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${task != null} ? 'Редактирование' : 'Новая задача')}"></head>
+<body>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+
+    <main class="main narrow">
+        <a class="back" th:href="@{/}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            К задачам
+        </a>
+
+        <header class="page-head">
+            <h1 th:text="${task != null} ? 'Редактирование' : 'Новая задача'">Новая задача</h1>
+            <p class="sub" th:if="${task != null}"
+               th:text="'Создана ' + ${#temporals.format(task.createdAt, 'd MMMM yyyy, HH:mm')}">Создана</p>
+        </header>
+
+        <form class="panel form-stack" method="post" th:object="${form}" novalidate
+              th:action="${task != null} ? @{/tasks/{id}(id=${task.id})} : @{/tasks}">
+
+            <div class="field">
+                <label class="form-label" for="title">Название</label>
+                <input class="form-control form-control-lg" id="title" th:field="*{title}" maxlength="100"
+                       placeholder="Что нужно сделать?" autofocus
+                       th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'">
+                <div class="invalid-feedback" th:errors="*{title}">Ошибка</div>
+            </div>
+
+            <div class="field">
+                <label class="form-label" for="description">Описание <span class="optional">необязательно</span></label>
+                <textarea class="form-control" id="description" th:field="*{description}" rows="5" maxlength="2000"
+                          placeholder="Подробности, ссылки, шаги"
+                          th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"></textarea>
+                <div class="invalid-feedback" th:errors="*{description}">Ошибка</div>
+            </div>
+
+            <div class="field-row">
+                <fieldset class="field">
+                    <legend class="form-label">Приоритет</legend>
+                    <div class="segmented">
+                        <th:block th:each="p : ${priorities}">
+                            <input type="radio" class="btn-check" th:field="*{priority}" th:value="${p}"
+                                   th:id="'priority-' + ${p}">
+                            <label class="segment" th:for="'priority-' + ${p}">
+                                <span class="dot" th:classappend="'dot-' + ${#strings.toLowerCase(p.name())}"></span>
+                                <span th:text="${p.title}">Средний</span>
+                            </label>
+                        </th:block>
+                    </div>
+                    <div class="invalid-feedback d-block" th:errors="*{priority}">Ошибка</div>
+                </fieldset>
+
+                <div class="field">
+                    <label class="form-label" for="deadline">Срок <span class="optional">необязательно</span></label>
+                    <input class="form-control" type="date" id="deadline" th:field="*{deadline}"
+                           th:classappend="${#fields.hasErrors('deadline')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{deadline}">Ошибка</div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"
+                        th:text="${task != null} ? 'Сохранить' : 'Создать задачу'">Создать задачу</button>
+                <a class="btn btn-ghost" th:href="@{/}">Отмена</a>
+            </div>
+        </form>
+
+        <form class="danger-zone" method="post" th:if="${task != null}"
+              th:action="@{/tasks/{id}/delete(id=${task.id})}"
+              th:attr="data-confirm='Удалить задачу «' + ${task.title} + '»?'">
+            <div>
+                <strong>Удалить задачу</strong>
+                <p>Задача исчезнет без возможности восстановления.</p>
+            </div>
+            <button type="submit" class="btn btn-outline-danger">Удалить</button>
+        </form>
+    </main>
+</div>
+</body>
+</html>

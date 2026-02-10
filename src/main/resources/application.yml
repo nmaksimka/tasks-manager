@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: task-manager
+  web:
+    locale: ru_RU
+    locale-resolver: fixed
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/taskdb}
     username: ${DB_USERNAME:postgres}

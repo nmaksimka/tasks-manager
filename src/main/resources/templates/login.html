@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Вход')}"></head>
+<body class="auth">
+<main class="auth-shell">
+    <section class="auth-intro">
+        <a class="brand" th:href="@{/}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="m8 12.5 2.6 2.6L16 9.7"/></svg>
+            <span>Tasks</span>
+        </a>
+        <h1>Все дела в одном списке.</h1>
+        <ul class="auth-points">
+            <li><span class="dot dot-high"></span>Приоритеты и сроки</li>
+            <li><span class="dot dot-medium"></span>Просроченные видно сразу</li>
+            <li><span class="dot dot-low"></span>Поиск, фильтры и REST API</li>
+        </ul>
+    </section>
+
+    <section class="auth-card">
+        <h2>Вход</h2>
+        <p class="sub">Рады видеть снова.</p>
+
+        <div class="alert alert-danger" th:if="${param.error}">Неверный логин или пароль</div>
+        <div class="alert alert-success" th:if="${param.registered}">Аккаунт создан, теперь можно войти</div>
+        <div class="alert alert-secondary" th:if="${param.logout}">Вы вышли из аккаунта</div>
+
+        <form method="post" th:action="@{/login}" class="form-stack">
+            <div class="field">
+                <label class="form-label" for="username">Логин</label>
+                <input class="form-control" id="username" name="username" autocomplete="username" required autofocus>
+            </div>
+            <div class="field">
+                <label class="form-label" for="password">Пароль</label>
+                <input class="form-control" type="password" id="password" name="password"
+                       autocomplete="current-password" required>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me">
+                <label class="form-check-label" for="remember-me">Запомнить меня на 30 дней</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Войти</button>
+        </form>
+
+        <p class="auth-switch">Нет аккаунта? <a th:href="@{/register}">Зарегистрироваться</a></p>
+    </section>
+</main>
+</body>
+</html>
