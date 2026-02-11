@@ -2,7 +2,6 @@ package com.tasks_manager.taskmanager.controllers;
 
 import com.tasks_manager.taskmanager.dto.ProfileForm;
 import com.tasks_manager.taskmanager.security.AppUserPrincipal;
-import com.tasks_manager.taskmanager.services.TaskService;
 import com.tasks_manager.taskmanager.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,35 +19,28 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class ProfileController {
 
     private final UserService userService;
-    private final TaskService taskService;
 
-    public ProfileController(UserService userService, TaskService taskService) {
+    public ProfileController(UserService userService) {
         this.userService = userService;
-        this.taskService = taskService;
     }
 
     @GetMapping
     public String profile(@AuthenticationPrincipal AppUserPrincipal principal, Model model) {
         var user = userService.getUser(principal.id());
         model.addAttribute("form", new ProfileForm(user.getFirstName(), user.getLastName()));
-        return render(principal, model);
+        return "profile";
     }
 
     @PostMapping
     public String update(@AuthenticationPrincipal AppUserPrincipal principal,
-                         @Valid @ModelAttribute("form") ProfileForm form, BindingResult result, Model model,
+                         @Valid @ModelAttribute("form") ProfileForm form, BindingResult result,
                          RedirectAttributes redirect) {
         if (result.hasErrors()) {
-            return render(principal, model);
+            return "profile";
         }
         userService.updateProfile(principal.id(), form);
         redirect.addFlashAttribute("message", "Профиль обновлён");
         return "redirect:/profile";
     }
 
-    private String render(AppUserPrincipal principal, Model model) {
-        model.addAttribute("user", userService.getUser(principal.id()));
-        model.addAttribute("stats", taskService.stats(principal.id()));
-        return "profile";
-    }
 }

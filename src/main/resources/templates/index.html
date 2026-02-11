@@ -1,429 +1,99 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Все задачи - Task Manager</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link th:href="@{/css/style.css}" rel="stylesheet">
-</head>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${query.filter.title})}"></head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="/">
-            <span class="fs-4">✅</span> Task Manager
-        </a>
-        <div sec:authorize="!isAuthenticated()">
-            <li class="nav-item">
-                <a class="nav-link" th:href="@{/login}">Войти</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:href="@{/register}">Регистрация</a>
-            </li>
-        </div>
-        <div sec:authorize="isAuthenticated()">
-            <li class="nav-item">
-                <a class="nav-link btn btn-light text-primary fw-bold px-3" href="/tasks/new">
-                    ➕ Новая задача
-                </a>
-            </li>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
-                    👤 <span sec:authentication="name">User</span>
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                    <li><a class="dropdown-item" th:href="@{/profile}">Профиль</a></li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li>
-                        <form th:action="@{/logout}" method="post" class="d-inline">
-                            <button type="submit" class="dropdown-item">Выйти</button>
-                        </form>
-                    </li>
-                </ul>
-            </li>
+<div class="shell">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
-                    🌗 Тема
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="themeDropdown">
-                    <li>
-                        <div class="dropdown-item d-flex align-items-center justify-content-between">
-                            <span>Темная тема</span>
-                            <label class="theme-switch">
-                                <input type="checkbox" id="themeToggle">
-                                <span class="theme-slider"></span>
-                            </label>
-                        </div>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li><a class="dropdown-item" href="#" onclick="setTheme('light'); return false;">☀️ Светлая</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setTheme('dark'); return false;">🌙 Темная</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setTheme('auto'); return false;">🔄 Авто</a></li>
-                </ul>
-            </li>
-        </div>
-        </ul>
-    </div>
-    </div>
-</nav>
-
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h1 class="fw-bold">📋 Все задачи</h1>
-            <p class="text-muted">Управляйте вашими задачами эффективно</p>
-        </div>
-        <div class="col-md-6">
-            <div class="row text-center">
-                <div class="col-4">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body py-3">
-                            <h3 class="text-primary mb-0" th:text="${tasks.size()}">0</h3>
-                            <small class="text-muted">Всего</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body py-3">
-                            <h3 class="text-success mb-0" th:text="${activeTasks.size()}">0</h3>
-                            <small class="text-muted">Активных</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4">
-                    <div class="card border-0 bg-light">
-                        <div class="card-body py-3">
-                            <h3 class="text-secondary mb-0" th:text="${completedTasks.size()}">0</h3>
-                            <small class="text-muted">Выполненных</small>
-                        </div>
-                    </div>
-                </div>
+    <main class="main">
+        <header class="topbar">
+            <div class="heading">
+                <h1>
+                    <span th:text="${query.filter.title}">Все</span>
+                    <span class="heading-tag" th:if="${query.priority != null}" th:text="${query.priority.title}">Высокий</span>
+                </h1>
+                <p class="sub">
+                    <span th:text="${#lists.size(tasks)} + ' ' + ${@plural.tasks(#lists.size(tasks))}">3 задачи</span>
+                    <span class="sep">·</span>
+                    <span th:text="'выполнено ' + ${stats.completionPercent()} + '%'">выполнено 40%</span>
+                </p>
+                <progress class="progress-line" max="100" th:value="${stats.completionPercent()}" value="40"></progress>
             </div>
-        </div>
-    </div>
 
-    <div class="card mb-4 border-0 shadow-sm">
-        <div class="card-body">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-4">
-                    <form th:action="@{/tasks/search}" method="get" class="d-flex">
-                        <div class="input-group">
-                            <input type="text" name="keyword" class="form-control"
-                                   th:value="${searchKeyword}"
-                                   placeholder="Поиск по названию или описанию...">
-                            <button class="btn btn-outline-primary" type="submit">
-                                🔍 Поиск
-                            </button>
-                        </div>
+            <form class="tools" method="get" th:action="@{/}" role="search">
+                <input type="hidden" name="filter" th:if="${query.filter.name() != 'ALL'}" th:value="${query.filter}">
+                <input type="hidden" name="priority" th:if="${query.priority != null}" th:value="${query.priority}">
+                <label class="search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+                    <input class="form-control" type="search" name="q" th:value="${query.q}"
+                           placeholder="Поиск по задачам" aria-label="Поиск" data-search>
+                    <kbd>/</kbd>
+                </label>
+                <select class="form-select" name="sort" aria-label="Сортировка" data-autosubmit>
+                    <option th:each="s : ${sorts}" th:value="${s}" th:text="${s.title}"
+                            th:selected="${query.sort == s}">Сначала новые</option>
+                </select>
+            </form>
+        </header>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <section class="task-list" th:unless="${#lists.isEmpty(tasks)}" aria-label="Задачи">
+            <article class="task" th:each="task : ${tasks}"
+                     th:classappend="${task.completed} ? 'is-done' : ''">
+                <form class="check-form" method="post" th:action="@{/tasks/{id}/toggle(id=${task.id})}">
+                    <th:block th:replace="~{fragments/layout :: queryFields(${query})}"></th:block>
+                    <button type="submit" class="check" th:classappend="'check-' + ${#strings.toLowerCase(task.priority.name())}"
+                            th:attr="aria-label=${task.completed} ? 'Вернуть в работу' : 'Отметить выполненной'">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 12.5 3.6 3.6 7.4-8"/></svg>
+                    </button>
+                </form>
+
+                <div class="task-body">
+                    <a class="task-title" th:href="@{/tasks/{id}/edit(id=${task.id})}" th:text="${task.title}">Задача</a>
+                    <p class="task-desc" th:if="${task.description}" th:text="${task.description}">Описание</p>
+                    <div class="task-meta">
+                        <span class="chip" th:classappend="'prio-' + ${#strings.toLowerCase(task.priority.name())}">
+                            <span class="dot" th:classappend="'dot-' + ${#strings.toLowerCase(task.priority.name())}"></span>
+                            <span th:text="${task.priority.title}">Средний</span>
+                        </span>
+                        <span class="chip due" th:if="${task.deadline}"
+                              th:classappend="'due-' + ${#strings.toLowerCase(task.deadlineStatus.name())}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+                            <span th:switch="${task.deadlineStatus.name()}">
+                                <span th:case="'OVERDUE'" th:text="'Просрочено · ' + ${#temporals.format(task.deadline, 'd MMM')}">Просрочено</span>
+                                <span th:case="'TODAY'">Сегодня</span>
+                                <span th:case="*" th:text="${#temporals.format(task.deadline, 'd MMM')}">15 янв.</span>
+                            </span>
+                        </span>
+                        <span class="chip ghost" th:if="${task.completed and task.completedAt != null}"
+                              th:text="'Готово ' + ${#temporals.format(task.completedAt, 'd MMM, HH:mm')}">Готово</span>
+                    </div>
+                </div>
+
+                <div class="task-actions">
+                    <a class="icon-btn" th:href="@{/tasks/{id}/edit(id=${task.id})}" title="Изменить" aria-label="Изменить">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>
+                    </a>
+                    <form method="post" th:action="@{/tasks/{id}/delete(id=${task.id})}"
+                          th:attr="data-confirm='Удалить задачу «' + ${task.title} + '»?'">
+                        <button type="submit" class="icon-btn danger" title="Удалить" aria-label="Удалить">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+                        </button>
                     </form>
                 </div>
+            </article>
+        </section>
 
-                <div class="col-md-4">
-                    <div class="btn-group w-100">
-                        <a href="/"
-                           class="btn btn-outline-secondary"
-                           th:classappend="${activeFilter == null} ? 'active' : ''">
-                            Все
-                        </a>
-                        <a th:href="@{/tasks/filter(filter='active')}"
-                           class="btn btn-outline-success"
-                           th:classappend="${activeFilter == 'active'} ? 'active' : ''">
-                            Активные
-                        </a>
-                        <a th:href="@{/tasks/filter(filter='completed')}"
-                           class="btn btn-outline-secondary"
-                           th:classappend="${activeFilter == 'completed'} ? 'active' : ''">
-                            Выполненные
-                        </a>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="dropdown sort-dropdown">
-                        <button class="btn btn-outline-primary w-100 dropdown-toggle"
-                                type="button" data-bs-toggle="dropdown">
-                            📊 Сортировка
-                            <span th:if="${sortBy == 'priority'}">(по приоритету)</span>
-                            <span th:if="${sortBy == 'createdAt'}">(по дате)</span>
-                            <span th:if="${sortBy == 'title'}">(по названию)</span>
-                        </button>
-                        <ul class="dropdown-menu w-100">
-                            <li><a class="dropdown-item" th:href="@{/tasks/sort(by='priority')}"
-                                   th:classappend="${sortBy == 'priority'} ? 'active' : ''">
-                                По приоритету
-                            </a></li>
-                            <li><a class="dropdown-item" th:href="@{/tasks/sort(by='createdAt')}"
-                                   th:classappend="${sortBy == 'createdAt'} ? 'active' : ''">
-                                По дате создания (новые сверху)
-                            </a></li>
-                            <li><a class="dropdown-item" th:href="@{/tasks/sort(by='title')}"
-                                   th:classappend="${sortBy == 'title'} ? 'active' : ''">
-                                По названию (А-Я)
-                            </a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="/">Сбросить сортировку</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-3">
-                <small class="text-muted ms-3 me-2">Дедлайн:</small>
-                <a th:href="@{/tasks/deadline(type='overdue')}"
-                   class="btn btn-sm btn-danger"
-                   th:classappend="${deadlineFilter == 'overdue'} ? 'active' : ''">
-                    ⚠️ Просроченные
-                </a>
-                <a th:href="@{/tasks/deadline(type='today')}"
-                   class="btn btn-sm btn-warning"
-                   th:classappend="${deadlineFilter == 'today'} ? 'active' : ''">
-                    📅 Сегодня
-                </a>
-                <a th:href="@{/tasks/deadline(type='week')}"
-                   class="btn btn-sm btn-info"
-                   th:classappend="${deadlineFilter == 'week'} ? 'active' : ''">
-                    🗓️ На неделе
-                </a>
-                <small class="text-muted me-2">Приоритет:</small>
-                <a th:href="@{/tasks/filter(filter='high')}"
-                   class="btn btn-sm btn-danger"
-                   th:classappend="${activeFilter == 'high'} ? 'active' : ''">
-                    Высокий
-                </a>
-                <a th:href="@{/tasks/filter(filter='medium')}"
-                   class="btn btn-sm btn-warning"
-                   th:classappend="${activeFilter == 'medium'} ? 'active' : ''">
-                    Средний
-                </a>
-                <a th:href="@{/tasks/filter(filter='low')}"
-                   class="btn btn-sm btn-success"
-                   th:classappend="${activeFilter == 'low'} ? 'active' : ''">
-                    Низкий
-                </a>
-                <a href="/" class="btn btn-sm btn-outline-secondary">Сбросить все</a>
-            </div>
-        </div>
-    </div>
-
-    <div th:if="${tasks.empty}">
-        <div class="text-center py-5">
-            <div class="display-1 text-muted mb-3">📭</div>
-            <h3 class="mb-3">Задачи не найдены</h3>
-            <p class="text-muted mb-4" th:if="${searchKeyword}">
-                По запросу "<span th:text="${searchKeyword}"></span>" ничего не найдено
-            </p>
-            <a href="/tasks/new" class="btn btn-primary btn-lg px-4">
-                ➕ Создать первую задачу
-            </a>
-        </div>
-    </div>
-
-    <div th:unless="${tasks.empty}" class="row g-3">
-        <div th:each="task : ${tasks}" class="col-12">
-            <div class="card task-card border-start"
-                 th:class="${task.completed} ? 'border-success' :
-                           (${task.priority == 1} ? 'border-danger' :
-                           (${task.priority == 2} ? 'border-warning' : 'border-success'))">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h5 class="card-title mb-1">
-                                <span th:if="${task.completed}" class="text-decoration-line-through text-muted">
-                                    <span th:text="${task.title}"></span>
-                                </span>
-                                <span th:unless="${task.completed}" th:text="${task.title}"></span>
-
-                                <span class="badge ms-2"
-                                      th:class="${task.priority == 1} ? 'bg-danger' : (${task.priority == 2} ? 'bg-warning' : 'bg-success')">
-                                    <span th:if="${task.priority == 1}">🔴 Высокий</span>
-                                    <span th:if="${task.priority == 2}">🟡 Средний</span>
-                                    <span th:if="${task.priority == 3}">🟢 Низкий</span>
-                                </span>
-
-                                <span class="badge ms-1"
-                                      th:class="${task.completed} ? 'bg-success' : 'bg-warning'">
-                                    <span th:if="${task.completed}">✅ Выполнено</span>
-                                    <span th:unless="${task.completed}">📝 Активно</span>
-                                </span>
-                            </h5>
-
-                            <p th:if="${task.description}" class="card-text text-muted mb-2">
-                                <small th:text="${task.description}"></small>
-                            </p>
-
-                            <div class="text-muted small">
-                                <span>📅 Создано: <span
-                                        th:text="${#temporals.format(task.createdAt, 'dd.MM.yyyy HH:mm')}"></span></span>
-                                <span th:if="${task.deadline}" class="ms-3">
-                                    ⏰ Дедлайн:
-                                    <span th:text="${#temporals.format(task.deadline, 'dd.MM.yyyy')}"
-                                          th:class="${task.deadlineStatus}">
-                                    </span>
-                                    <span th:if="${task.deadlineStatus == 'overdue'}" class="badge bg-danger ms-1">ПРОСРОЧЕНО</span>
-                                    <span th:if="${task.deadlineStatus == 'today'}" class="badge bg-warning ms-1">СЕГОДНЯ</span>
-                                    <span th:if="${task.deadlineStatus == 'soon'}"
-                                          class="badge bg-info ms-1">СКОРО</span>
-                                </span>
-                                <span th:if="${task.completed}" class="ms-3">
-                                    ✅ Выполнено: <span
-                                        th:text="${#temporals.format(task.completedAt, 'dd.MM.yyyy HH:mm')}"></span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4 text-end task-actions">
-                            <div class="btn-group">
-                                <a th:href="@{'/tasks/edit/' + ${task.id}}"
-                                   class="btn btn-outline-primary btn-sm"
-                                   title="Редактировать">
-                                    ✏️
-                                </a>
-
-                                <a th:href="@{'/tasks/complete/' + ${task.id}}"
-                                   class="btn btn-outline-success btn-sm"
-                                   th:if="${not task.completed}"
-                                   title="Отметить выполненной">
-                                    ✅
-                                </a>
-
-                                <a th:href="@{'/tasks/delete/' + ${task.id}}"
-                                   class="btn btn-outline-danger btn-sm"
-                                   onclick="return confirm('Удалить задачу?')"
-                                   title="Удалить">
-                                    🗑️
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div th:if="${(searchKeyword ?: '') != '' or (sortBy ?: '') != '' or (activeFilter ?: '') != ''}" class="mt-4">
-        <div class="alert alert-info">
-            <small>
-                <span th:if="${searchKeyword}">🔍 Поиск: "<span th:text="${searchKeyword}"></span>"</span>
-                <span th:if="${sortBy}" th:text="${', Сортировка: ' + sortBy}"></span>
-                <span th:if="${activeFilter}" th:text="${', Фильтр: ' + activeFilter}"></span>
-                <a href="/" class="ms-2">[Сбросить все]</a>
-            </small>
-        </div>
-    </div>
+        <section class="empty" th:if="${#lists.isEmpty(tasks)}">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="8" width="32" height="32" rx="9"/><path d="m17 24.5 5 5 9-10"/></svg>
+            <h2 th:if="${query.q != null}">Ничего не нашлось</h2>
+            <p th:if="${query.q != null}" th:text="'По запросу «' + ${query.q} + '» задач нет.'">По запросу задач нет.</p>
+            <h2 th:if="${query.q == null}">Здесь пусто</h2>
+            <p th:if="${query.q == null}">Задач в этом списке нет. Можно добавить новую.</p>
+            <a class="btn btn-primary" th:href="@{/tasks/new}">Новая задача</a>
+        </section>
+    </main>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function setTheme(theme) {
-        if (theme === 'dark') {
-            document.body.classList.add('dark-theme');
-            localStorage.setItem('theme', 'dark');
-            const toggle = document.getElementById('themeToggle');
-            if (toggle) toggle.checked = true;
-        }
-        else if (theme === 'light') {
-            document.body.classList.remove('dark-theme');
-            localStorage.setItem('theme', 'light');
-            const toggle = document.getElementById('themeToggle');
-            if (toggle) toggle.checked = false;
-        }
-        else if (theme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            localStorage.setItem('theme', 'auto');
-            if (prefersDark) {
-                document.body.classList.add('dark-theme');
-                const toggle = document.getElementById('themeToggle');
-                if (toggle) toggle.checked = true;
-            } else {
-                document.body.classList.remove('dark-theme');
-                const toggle = document.getElementById('themeToggle');
-                if (toggle) toggle.checked = false;
-            }
-        }
-
-        const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('themeDropdown'));
-        if (dropdown) dropdown.hide();
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedTheme = localStorage.getItem('theme');
-
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-theme');
-        }
-        else if (savedTheme === 'light') {
-            document.body.classList.remove('dark-theme');
-        }
-        else if (savedTheme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                document.body.classList.add('dark-theme');
-            } else {
-                document.body.classList.remove('dark-theme');
-            }
-        }
-        else {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                document.body.classList.add('dark-theme');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                localStorage.setItem('theme', 'light');
-            }
-        }
-
-        const toggle = document.getElementById('themeToggle');
-        if (toggle) {
-            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                toggle.checked = true;
-            } else {
-                toggle.checked = false;
-            }
-
-            toggle.addEventListener('change', function(e) {
-                e.stopPropagation();
-                if (this.checked) {
-                    setTheme('dark');
-                } else {
-                    setTheme('light');
-                }
-            });
-
-            const label = toggle.closest('.theme-switch');
-            if (label) {
-                label.style.cursor = 'pointer';
-                label.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-            }
-        }
-
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-            const currentTheme = localStorage.getItem('theme');
-            if (currentTheme === 'auto') {
-                if (e.matches) {
-                    document.body.classList.add('dark-theme');
-                    const toggle = document.getElementById('themeToggle');
-                    if (toggle) toggle.checked = true;
-                } else {
-                    document.body.classList.remove('dark-theme');
-                    const toggle = document.getElementById('themeToggle');
-                    if (toggle) toggle.checked = false;
-                }
-            }
-        });
-    });
-</script>
 </body>
 </html>

@@ -16,5 +16,7 @@ public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificat
 
     long countByUserIdAndCompletedFalseAndDeadline(Long userId, LocalDate deadline);
 
+    long countByUserIdAndCompletedFalseAndDeadlineBetween(Long userId, LocalDate from, LocalDate to);
+
     long countByUserIdAndCompletedFalseAndDeadlineBefore(Long userId, LocalDate deadline);
 }

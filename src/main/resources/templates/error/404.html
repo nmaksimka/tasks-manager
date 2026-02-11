@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Не найдено')}"></head>
+<body class="auth">
+<main class="error-page">
+    <span class="error-code">404</span>
+    <h1>Такой страницы нет</h1>
+    <p class="sub">Возможно, задачу удалили или ссылка устарела.</p>
+    <a class="btn btn-primary" th:href="@{/}">К задачам</a>
+</main>
+</body>
+</html>
