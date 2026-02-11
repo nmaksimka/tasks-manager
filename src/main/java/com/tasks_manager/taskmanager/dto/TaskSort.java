@@ -4,8 +4,8 @@ import org.springframework.data.domain.Sort;
 
 public enum TaskSort {
     NEWEST("Сначала новые", Sort.by(Sort.Order.desc("createdAt"))),
-    DEADLINE("По сроку", Sort.by(Sort.Order.asc("deadline").nullsLast(), Sort.Order.desc("createdAt"))),
-    PRIORITY("По приоритету", Sort.by(Sort.Order.asc("priority"), Sort.Order.asc("deadline").nullsLast())),
+    DEADLINE("По сроку", Sort.by(Sort.Order.asc("deadline"), Sort.Order.desc("createdAt"))),
+    PRIORITY("По приоритету", Sort.by(Sort.Order.asc("priority"), Sort.Order.asc("deadline"))),
     TITLE("По названию", Sort.by(Sort.Order.asc("title").ignoreCase()));
 
     private final String title;
