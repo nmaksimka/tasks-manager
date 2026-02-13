@@ -1,315 +1,65 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Регистрация в Task Manager</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link th:href="@{/css/style.css}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="fade-in">
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="text-center mb-5">
-                <a th:href="@{/}" class="text-decoration-none">
-                    <h1 class="display-4 fw-bold mb-2">🚀 Task Manager</h1>
-                </a>
-                <p class="lead text-muted">Присоединяйтесь к тысячам пользователей</p>
-            </div>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Регистрация')}"></head>
+<body class="auth">
+<main class="auth-shell">
+    <section class="auth-intro">
+        <a class="brand" th:href="@{/}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="m8 12.5 2.6 2.6L16 9.7"/></svg>
+            <span>Tasks</span>
+        </a>
+        <h1>Начните с одной задачи.</h1>
+        <ul class="auth-points">
+            <li><span class="dot dot-high"></span>Каждый видит только свои задачи</li>
+            <li><span class="dot dot-medium"></span>Пароли хранятся в BCrypt</li>
+            <li><span class="dot dot-low"></span>Светлая и тёмная тема</li>
+        </ul>
+    </section>
 
-            <div class="card shadow-lg">
-                <div class="card-header text-center py-4">
-                    <h2 class="fw-bold mb-0"><i class="fas fa-user-plus me-2"></i>Создание аккаунта</h2>
+    <section class="auth-card">
+        <h2>Регистрация</h2>
+        <p class="sub">Займёт меньше минуты.</p>
+
+        <form method="post" th:action="@{/register}" th:object="${form}" class="form-stack" novalidate>
+            <div class="field-row">
+                <div class="field">
+                    <label class="form-label" for="firstName">Имя</label>
+                    <input class="form-control" th:field="*{firstName}" id="firstName" autocomplete="given-name"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{firstName}">Ошибка</div>
                 </div>
-                <div class="card-body p-5">
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="text-center mb-3">
-                                <div class="rounded-circle bg-primary p-3 d-inline-flex mb-2">
-                                    <i class="fas fa-user-check fa-2x text-white"></i>
-                                </div>
-                                <h6>Простая регистрация</h6>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center mb-3">
-                                <div class="rounded-circle bg-success p-3 d-inline-flex mb-2">
-                                    <i class="fas fa-shield-alt fa-2x text-white"></i>
-                                </div>
-                                <h6>Безопасность</h6>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center mb-3">
-                                <div class="rounded-circle bg-warning p-3 d-inline-flex mb-2">
-                                    <i class="fas fa-rocket fa-2x text-white"></i>
-                                </div>
-                                <h6>Мгновенный доступ</h6>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="theme-selector mb-4 text-center">
-                        <small class="text-muted me-3">Тема:</small>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setTheme('light')">
-                                <i class="fas fa-sun me-1"></i>Светлая
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setTheme('dark')">
-                                <i class="fas fa-moon me-1"></i>Темная
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setTheme('auto')">
-                                <i class="fas fa-robot me-1"></i>Авто
-                            </button>
-                        </div>
-                    </div>
-
-                    <div th:if="${error}" class="alert alert-danger d-flex align-items-center" role="alert">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        <div th:text="${error}"></div>
-                    </div>
-
-                    <form th:action="@{/register}" method="post" th:object="${registrationRequest}" class="needs-validation" novalidate>
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label for="username" class="form-label fw-bold">
-                                    <i class="fas fa-user-tag me-1"></i>Имя пользователя *
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="fas fa-user text-muted"></i>
-                                    </span>
-                                    <input type="text" class="form-control border-start-0" id="username" th:field="*{username}" required
-                                           placeholder="username123" minlength="3" maxlength="50">
-                                </div>
-                                <div class="form-text">От 3 до 50 символов</div>
-                            </div>
-
-                            <div class="col-md-6 mb-4">
-                                <label for="email" class="form-label fw-bold">
-                                    <i class="fas fa-envelope me-1"></i>Email *
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="fas fa-at text-muted"></i>
-                                    </span>
-                                    <input type="email" class="form-control border-start-0" id="email" th:field="*{email}" required
-                                           placeholder="example@mail.com">
-                                </div>
-                                <div class="form-text">Используйте действующий email</div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="password" class="form-label fw-bold">
-                                <i class="fas fa-lock me-1"></i>Пароль *
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-key text-muted"></i>
-                                </span>
-                                <input type="password" class="form-control border-start-0" id="password" th:field="*{password}" required
-                                       placeholder="Минимум 6 символов" minlength="6">
-                                <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <div class="password-strength mt-2">
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar" id="passwordStrength" style="width: 0%"></div>
-                                </div>
-                                <small class="text-muted" id="passwordHint">Введите пароль</small>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-4">
-                                <label for="firstName" class="form-label fw-bold">
-                                    <i class="fas fa-id-card me-1"></i>Имя
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="fas fa-user text-muted"></i>
-                                    </span>
-                                    <input type="text" class="form-control border-start-0" id="firstName" th:field="*{firstName}"
-                                           placeholder="Иван (необязательно)">
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-4">
-                                <label for="lastName" class="form-label fw-bold">
-                                    <i class="fas fa-id-card me-1"></i>Фамилия
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0">
-                                        <i class="fas fa-user text-muted"></i>
-                                    </span>
-                                    <input type="text" class="form-control border-start-0" id="lastName" th:field="*{lastName}"
-                                           placeholder="Иванов (необязательно)">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4 form-check">
-                            <input type="checkbox" class="form-check-input" id="terms" required>
-                            <label class="form-check-label" for="terms">
-                                Я согласен с <a href="#" class="text-primary">условиями использования</a> и <a href="#" class="text-primary">политикой конфиденциальности</a>
-                            </label>
-                        </div>
-
-                        <div class="d-grid gap-2 mb-4">
-                            <button type="submit" class="btn btn-primary btn-lg py-3">
-                                <i class="fas fa-user-plus me-2"></i>Создать аккаунт
-                            </button>
-                        </div>
-
-                        <div class="text-center">
-                            <p class="text-muted mb-2">Уже есть аккаунт?</p>
-                            <a th:href="@{/login}" class="btn btn-outline-primary">
-                                <i class="fas fa-sign-in-alt me-1"></i>Войти в систему
-                            </a>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-footer text-center py-3">
-                    <small class="text-muted">
-                        <i class="fas fa-check-circle text-success me-1"></i>Бесплатно • Без рекламы • Без ограничений
-                    </small>
+                <div class="field">
+                    <label class="form-label" for="lastName">Фамилия</label>
+                    <input class="form-control" th:field="*{lastName}" id="lastName" autocomplete="family-name"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{lastName}">Ошибка</div>
                 </div>
             </div>
-
-            <div class="mt-4 text-center">
-                <div class="card border-0 bg-transparent">
-                    <div class="card-body">
-                        <h6 class="fw-bold mb-3">Преимущества Task Manager:</h6>
-                        <div class="row text-muted small">
-                            <div class="col-md-3 mb-2">
-                                <i class="fas fa-check-circle text-success me-1"></i>Неограниченные задачи
-                            </div>
-                            <div class="col-md-3 mb-2">
-                                <i class="fas fa-check-circle text-success me-1"></i>Приоритеты и дедлайны
-                            </div>
-                            <div class="col-md-3 mb-2">
-                                <i class="fas fa-check-circle text-success me-1"></i>Статистика и отчеты
-                            </div>
-                            <div class="col-md-3 mb-2">
-                                <i class="fas fa-check-circle text-success me-1"></i>Темная тема
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="field">
+                <label class="form-label" for="username">Логин</label>
+                <input class="form-control" th:field="*{username}" id="username" autocomplete="username"
+                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
+                <div class="invalid-feedback" th:errors="*{username}">Ошибка</div>
             </div>
-        </div>
-    </div>
-</div>
+            <div class="field">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-control" type="email" th:field="*{email}" id="email" autocomplete="email"
+                       th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                <div class="invalid-feedback" th:errors="*{email}">Ошибка</div>
+            </div>
+            <div class="field">
+                <label class="form-label" for="password">Пароль</label>
+                <input class="form-control" type="password" th:field="*{password}" id="password"
+                       autocomplete="new-password"
+                       th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                <div class="form-text" th:unless="${#fields.hasErrors('password')}">Не меньше 8 символов</div>
+                <div class="invalid-feedback" th:errors="*{password}">Ошибка</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Создать аккаунт</button>
+        </form>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.getElementById('togglePassword').addEventListener('click', function() {
-        const passwordInput = document.getElementById('password');
-        const icon = this.querySelector('i');
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            passwordInput.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
-    });
-
-    document.getElementById('password').addEventListener('input', function() {
-        const password = this.value;
-        const strengthBar = document.getElementById('passwordStrength');
-        const hint = document.getElementById('passwordHint');
-
-        let strength = 0;
-        let hintText = '';
-
-        if (password.length > 5) strength += 25;
-        if (password.length > 8) strength += 25;
-        if (/[A-Z]/.test(password)) strength += 25;
-        if (/[0-9]/.test(password)) strength += 25;
-
-        strengthBar.style.width = strength + '%';
-
-        if (strength < 25) {
-            strengthBar.className = 'progress-bar bg-danger';
-            hintText = 'Слабый пароль';
-        } else if (strength < 50) {
-            strengthBar.className = 'progress-bar bg-warning';
-            hintText = 'Средний пароль';
-        } else if (strength < 75) {
-            strengthBar.className = 'progress-bar bg-info';
-            hintText = 'Хороший пароль';
-        } else {
-            strengthBar.className = 'progress-bar bg-success';
-            hintText = 'Отличный пароль!';
-        }
-
-        hint.textContent = hintText;
-    });
-
-    function setTheme(theme) {
-        if (theme === 'dark') {
-            document.body.classList.add('dark-theme');
-            localStorage.setItem('theme', 'dark');
-        } else if (theme === 'light') {
-            document.body.classList.remove('dark-theme');
-            localStorage.setItem('theme', 'light');
-        } else if (theme === 'auto') {
-            localStorage.setItem('theme', 'auto');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                document.body.classList.add('dark-theme');
-            } else {
-                document.body.classList.remove('dark-theme');
-            }
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-theme');
-        } else if (savedTheme === 'light') {
-            document.body.classList.remove('dark-theme');
-        } else if (savedTheme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                document.body.classList.add('dark-theme');
-            }
-        } else {
-            localStorage.setItem('theme', 'auto');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (prefersDark) {
-                document.body.classList.add('dark-theme');
-            }
-        }
-
-        const form = document.querySelector('.needs-validation');
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        }, false);
-    });
-
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-        const currentTheme = localStorage.getItem('theme');
-        if (currentTheme === 'auto') {
-            if (e.matches) {
-                document.body.classList.add('dark-theme');
-            } else {
-                document.body.classList.remove('dark-theme');
-            }
-        }
-    });
-</script>
+        <p class="auth-switch">Уже есть аккаунт? <a th:href="@{/login}">Войти</a></p>
+    </section>
+</main>
 </body>
 </html>

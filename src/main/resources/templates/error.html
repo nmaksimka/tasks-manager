@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ошибка')}"></head>
+<body class="auth">
+<main class="error-page">
+    <span class="error-code" th:text="${status}">500</span>
+    <h1 th:text="${status == 403} ? 'Нет доступа' : 'Что-то пошло не так'">Что-то пошло не так</h1>
+    <p class="sub">Попробуйте обновить страницу или вернуться к списку.</p>
+    <a class="btn btn-primary" th:href="@{/}">К задачам</a>
+</main>
+</body>
+</html>

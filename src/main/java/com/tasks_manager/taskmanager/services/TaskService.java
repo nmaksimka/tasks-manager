@@ -1,184 +1,126 @@
 package com.tasks_manager.taskmanager.services;
 
-import com.tasks_manager.taskmanager.entities.*;
-import com.tasks_manager.taskmanager.repositories.*;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
+import com.tasks_manager.taskmanager.dto.TaskForm;
+import com.tasks_manager.taskmanager.dto.TaskQuery;
+import com.tasks_manager.taskmanager.dto.TaskResponse;
+import com.tasks_manager.taskmanager.dto.TaskStats;
+import com.tasks_manager.taskmanager.entities.Task;
+import com.tasks_manager.taskmanager.exceptions.TaskNotFoundException;
+import com.tasks_manager.taskmanager.repositories.TaskRepository;
+import com.tasks_manager.taskmanager.repositories.TaskSpecifications;
+import com.tasks_manager.taskmanager.repositories.UserRepository;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TaskService {
+
     private final TaskRepository taskRepository;
-    private final UserService userService;
     private final UserRepository userRepository;
+    private final Clock clock;
 
-    @PostConstruct
-    public void initTestData() {
-        if (taskRepository.count() == 0) {
-            User testUser = userRepository.findByUsername("test").orElseGet(() -> {
-               User user = new User();
-               user.setUsername("test");
-               user.setEmail("test@example.com");
-               String encodedPassword = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("password");
-               user.setPassword(encodedPassword);
-               user.setRoles(java.util.Collections.singleton("ROLE_USER"));
-               user.setCreatedAt(LocalDateTime.now());
-               user.setUpdatedAt(LocalDateTime.now());
-               return userRepository.save(user);
-            });
-            Task task1 = new Task("Тренировки",
-                    "Сходить на 3 тренировки за эту неделю и выполнить весь план", 1);
-            task1.setDeadline(LocalDate.now().plusDays(3));
-            task1.setUser(testUser);
-            taskRepository.save(task1);
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, Clock clock) {
+        this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
+        this.clock = clock;
+    }
 
-            Task task2 = new Task("Купить продукты",
-                    "Молоко, хлеб, яйца, помидоры, лапша, куринне филе", 2);
-            task2.setCompleted(true);
-            task2.setUser(testUser);
-            task2.setCompletedAt(LocalDateTime.now().minusDays(1));
-            task2.setDeadline(LocalDate.now().minusDays(1));
-            taskRepository.save(task2);
+    public List<TaskResponse> findTasks(Long userId, TaskQuery query) {
+        var today = today();
+        return taskRepository.findAll(TaskSpecifications.matching(userId, query, today), query.sort().toSort())
+                .stream()
+                .map(task -> TaskResponse.from(task, today))
+                .toList();
+    }
 
-            Task task3 = new Task("Сессия", "Сдать прогу, мкн и матан", 3);
-            task3.setDeadline(LocalDate.now().plusWeeks(2));
-            task3.setUser(testUser);
-            taskRepository.save(task3);
+    public TaskResponse getTask(Long userId, Long taskId) {
+        return TaskResponse.from(findOwned(userId, taskId), today());
+    }
 
-            System.out.println("Создано 3 тестовые задачи пользователя " + testUser.getUsername());
+    public TaskStats stats(Long userId) {
+        var today = today();
+        var total = taskRepository.countByUserId(userId);
+        var completed = taskRepository.countByUserIdAndCompletedTrue(userId);
+        return new TaskStats(
+                total,
+                total - completed,
+                completed,
+                taskRepository.countByUserIdAndCompletedFalseAndDeadline(userId, today),
+                taskRepository.countByUserIdAndCompletedFalseAndDeadlineBetween(userId, today, today.plusDays(7)),
+                taskRepository.countByUserIdAndCompletedFalseAndDeadlineBefore(userId, today)
+        );
+    }
+
+    @Transactional
+    public TaskResponse createTask(Long userId, TaskForm form) {
+        var task = new Task(userRepository.getReferenceById(userId), now());
+        apply(task, form);
+        return TaskResponse.from(taskRepository.save(task), today());
+    }
+
+    @Transactional
+    public TaskResponse updateTask(Long userId, Long taskId, TaskForm form) {
+        var task = findOwned(userId, taskId);
+        apply(task, form);
+        return TaskResponse.from(task, today());
+    }
+
+    @Transactional
+    public TaskResponse completeTask(Long userId, Long taskId) {
+        var task = findOwned(userId, taskId);
+        if (!task.isCompleted()) {
+            task.complete(now());
         }
+        return TaskResponse.from(task, today());
     }
 
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if(authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("Пользователь не аутентифицирован");
+    @Transactional
+    public TaskResponse reopenTask(Long userId, Long taskId) {
+        var task = findOwned(userId, taskId);
+        task.reopen();
+        return TaskResponse.from(task, today());
+    }
+
+    @Transactional
+    public TaskResponse toggleTask(Long userId, Long taskId) {
+        var task = findOwned(userId, taskId);
+        if (task.isCompleted()) {
+            task.reopen();
+        } else {
+            task.complete(now());
         }
-
-        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-        return userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        return TaskResponse.from(task, today());
     }
 
-    public Task createTask(String title, String description, Integer priority, LocalDate deadline) {
-        User currentUser = getCurrentUser();
-
-        Task task = new Task();
-        task.setTitle(title);
-        task.setDescription(description);
-        task.setPriority(priority);
-        task.setCompleted(false);
-        task.setDeadline(deadline);
-        task.setUser(currentUser);
-
-        return taskRepository.save(task);
+    @Transactional
+    public void deleteTask(Long userId, Long taskId) {
+        taskRepository.delete(findOwned(userId, taskId));
     }
 
-    public List<Task> getAllTasks() {
-        User currentUser = getCurrentUser();
-        return taskRepository.findByUserId(currentUser.getId());
+    private Task findOwned(Long userId, Long taskId) {
+        return taskRepository.findByIdAndUserId(taskId, userId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
-    public Task getTaskById(Long id) {
-        User currentUser = getCurrentUser();
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-        if(!task.getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Доступ запрещен: информация принадлежит другому пользователю");
-        }
-        return task;
+    private static void apply(Task task, TaskForm form) {
+        task.setTitle(form.getTitle().strip());
+        task.setDescription(form.getDescription() == null || form.getDescription().isBlank()
+                ? null
+                : form.getDescription().strip());
+        task.setPriority(form.getPriority());
+        task.setDeadline(form.getDeadline());
     }
 
-    public Task updateTask(Long id, String title, String description, Integer priority, LocalDate deadline) {
-        User currentUser = getCurrentUser();
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-
-        if (!task.getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Доступ запрещен: информация принадлежит другому пользователю");
-        }
-
-        if(title != null) task.setTitle(title);
-        if(description != null) task.setDescription(description);
-        if(priority != null) task.setPriority(priority);
-        if(deadline != null) task.setDeadline(deadline);
-
-        return taskRepository.save(task);
+    private LocalDate today() {
+        return LocalDate.now(clock);
     }
 
-    public Task completeTask(Long id) {
-        User currentUser = getCurrentUser();
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-
-        if (!task.getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Доступ запрещен: информация принадлежит другому пользователю");
-        }
-
-        task.setCompleted(true);
-        task.setCompletedAt(LocalDateTime.now());
-
-        return taskRepository.save(task);
-    }
-
-    public void deleteTask(Long id) {
-        User currentUser = getCurrentUser();
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-
-        if (!task.getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Доступ запрещен: информация принадлежит другому пользователю");
-        }
-        taskRepository.deleteById(id);
-    }
-
-    public List<Task> getCompletedTasks() {
-        User currentUser = getCurrentUser();
-        return taskRepository.findByUserIdAndCompletedTrue(currentUser.getId());
-    }
-
-    public List<Task> getActiveTasks() {
-        User currentUser = getCurrentUser();
-        return taskRepository.findByUserIdAndCompletedFalse(currentUser.getId());
-    }
-
-    public List<Task> searchTasks(String keyword) {
-        User currentUser = getCurrentUser();
-        if(keyword == null || keyword.trim().isEmpty()) {
-            return getAllTasks();
-        }
-        return taskRepository.searchByUser(currentUser.getId(), keyword.trim().toLowerCase());
-    }
-
-    public List<Task> getOverdueTasks() {
-        User currentUser = getCurrentUser();
-        LocalDate today = LocalDate.now();
-        return taskRepository.findByUserIdAndDeadlineBeforeAndCompletedFalse(currentUser.getId(), today);
-    }
-
-    public List<Task> getTodayTasks() {
-        User currentUser = getCurrentUser();
-        LocalDate today = LocalDate.now();
-        LocalDate endOfWeek = LocalDate.now().plusWeeks(1);
-        return taskRepository.findByUserIdAndDeadlineAndCompletedFalse(currentUser.getId(), today);
-    }
-
-    public List<Task> getTasksForThisWeek() {
-        User currentUser = getCurrentUser();
-        LocalDate today = LocalDate.now();
-        LocalDate endOfWeek = LocalDate.now().plusWeeks(1);
-        return taskRepository.findByUserIdAndDeadlineBetweenAndCompletedFalse(currentUser.getId(), today, endOfWeek);
-    }
-
-    public List<Task> getTasksByPriority(Integer priority) {
-        User currentUser = getCurrentUser();
-        return taskRepository.findByUserIdAndPriority(currentUser.getId(), priority);
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock);
     }
 }
